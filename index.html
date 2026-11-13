@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bono Amex Platinum</title>
+<style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: una sola columna. Primero los días y el avance, luego el formulario, al final el registro de gastos. */
+:root {
+  --bg: #EDEFF2;
+  --surface: #FFFFFF;
+  --fg: #151A22;
+  --muted: #5A6371;
+  --line: #D8DCE2;
+  --track: #DDE1E7;
+  --accent: #1F4E8C;
+  --accent-fg: #FFFFFF;
+  --ok: #1B7048;
+  --ok-bg: #E1F2E8;
+  --warn: #8F5300;
+  --warn-bg: #FAEACB;
+  --danger: #B3261E;
+  --font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1319; --surface: #171C24; --fg: #E8EBEF; --muted: #9AA3B0; --line: #2A313C; --track: #2A313C;
+    --accent: #6FA3E8; --accent-fg: #0B1220; --ok: #5CC48E; --ok-bg: #14301F; --warn: #E0A84A; --warn-bg: #33270E; --danger: #F2877F;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1319; --surface: #171C24; --fg: #E8EBEF; --muted: #9AA3B0; --line: #2A313C; --track: #2A313C;
+  --accent: #6FA3E8; --accent-fg: #0B1220; --ok: #5CC48E; --ok-bg: #14301F; --warn: #E0A84A; --warn-bg: #33270E; --danger: #F2877F;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-block: 24px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1, h2 { font-family: var(--font-head); margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.num { font-family: var(--font-head); font-variant-numeric: tabular-nums; }
+
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px 24px; }
+.top > div { min-width: 0; }
+.eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { font-size: 30px; line-height: 1.15; font-weight: 700; margin-top: 4px; }
+.periodo { color: var(--muted); margin-top: 6px; }
+.days { display: flex; align-items: baseline; gap: 10px; }
+.days-n { font-family: var(--font-head); font-variant-numeric: tabular-nums; font-size: 64px; line-height: 1; font-weight: 700; color: var(--accent); }
+.days-l { color: var(--muted); font-weight: 500; max-width: 9ch; line-height: 1.25; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+.prog-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; }
+.big { font-family: var(--font-head); font-variant-numeric: tabular-nums; font-size: 40px; line-height: 1.1; font-weight: 700; margin-top: 2px; overflow-wrap: anywhere; }
+.big2 { font-family: var(--font-head); font-variant-numeric: tabular-nums; font-size: 28px; line-height: 1.2; font-weight: 600; margin-top: 2px; color: var(--muted); overflow-wrap: anywhere; }
+.right { text-align: right; }
+.bar { position: relative; height: 14px; border-radius: 7px; background: var(--track); margin: 20px 0 10px; }
+.fill { height: 100%; width: 0; border-radius: 7px; background: var(--accent); transition: width .4s ease; }
+.tick { position: absolute; top: -5px; bottom: -5px; width: 2px; background: var(--fg); border-radius: 1px; left: 0; }
+.prog-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; font-variant-numeric: tabular-nums; }
+.legend { margin-top: 10px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.legend i { display: inline-block; width: 2px; height: 14px; background: var(--fg); border-radius: 1px; }
+
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0; overflow: hidden; }
+.stat { padding: 18px 20px; min-width: 0; }
+.stat + .stat { border-left: 1px solid var(--line); }
+.stat .v { font-family: var(--font-head); font-variant-numeric: tabular-nums; font-size: 24px; font-weight: 600; margin-top: 4px; overflow-wrap: anywhere; }
+.stat .s { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.v.warn { color: var(--warn); }
+.v.ok { color: var(--ok); }
+
+.people h2, .list-head h2, .form h2 { font-size: 18px; font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.chip { display: inline-flex; gap: 8px; align-items: baseline; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); min-width: 0; }
+.chip b { font-weight: 600; overflow-wrap: anywhere; }
+.chip span { font-family: var(--font-head); font-variant-numeric: tabular-nums; color: var(--warn); font-weight: 600; }
+.chip small { color: var(--muted); }
+
+.form h2 { margin-bottom: 14px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field > span { font-size: 13px; font-weight: 500; color: var(--muted); }
+.field.wide { grid-column: 1 / -1; }
+input, select, textarea, button { font: inherit; }
+input, select, textarea {
+  width: 100%; min-width: 0; font-size: 16px; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+}
+input:disabled { opacity: .5; }
+textarea { resize: vertical; min-height: 88px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
+.btn {
+  appearance: none; cursor: pointer; border-radius: 8px; padding: 10px 16px; font-weight: 600; font-size: 14px;
+  border: 1px solid var(--line); background: transparent; color: var(--fg);
+}
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn.small { padding: 6px 12px; font-size: 13px; font-weight: 500; }
+.btn.danger { color: var(--danger); border-color: var(--danger); }
+.btn:hover { filter: brightness(0.96); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.err { color: var(--danger); font-weight: 500; }
+
+.list-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { appearance: none; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--muted); padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500; }
+.tab[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+ul.items { list-style: none; margin: 0; padding: 0; }
+.item {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px;
+  padding: 14px 0; border-top: 1px solid var(--line);
+}
+.item:first-child { border-top: 0; }
+.item-main { min-width: 0; }
+.concepto { font-weight: 600; overflow-wrap: anywhere; }
+.meta { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.nota { color: var(--muted); font-size: 13px; font-style: italic; overflow-wrap: anywhere; }
+.item-side { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.monto { font-family: var(--font-head); font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 600; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.pend { color: var(--warn); background: var(--warn-bg); }
+.pill.paid { color: var(--ok); background: var(--ok-bg); }
+.item-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.confirm { font-size: 13px; color: var(--danger); font-weight: 500; }
+.vacio { padding: 28px 0 12px; color: var(--muted); }
+
+details.backup { margin-top: 4px; }
+details.backup summary { cursor: pointer; color: var(--muted); font-weight: 500; }
+details.backup .body { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.estado { color: var(--muted); font-size: 13px; text-align: center; }
+@media (max-width: 600px) {
+  h1 { font-size: 26px; }
+  .days-n { font-size: 52px; }
+  .big { font-size: 34px; }
+  .stats { grid-template-columns: 1fr; }
+  .stat + .stat { border-left: 0; border-top: 1px solid var(--line); }
+  .card { padding: 16px; }
+  .right { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+</style>
+
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">American Express Platinum</p>
+      <h1>Bono Amex Platinum</h1>
+      <p class="periodo" id="periodo"></p>
+    </div>
+    <div class="days" aria-live="polite">
+      <span class="days-n" id="diasN">0</span>
+      <span class="days-l" id="diasL">días restantes</span>
+    </div>
+  </header>
+
+  <section class="card" aria-labelledby="progT">
+    <div class="prog-head">
+      <div>
+        <p class="label" id="progT">Gastado</p>
+        <p class="big" id="gastado">$0</p>
+      </div>
+      <div class="right">
+        <p class="label">Faltan</p>
+        <p class="big2" id="faltan">$500,000</p>
+      </div>
+    </div>
+    <div class="bar" id="bar" role="progressbar" aria-label="Avance hacia la meta de gasto" aria-valuemin="0" aria-valuemax="500000" aria-valuenow="0">
+      <div class="fill" id="fill"></div>
+      <div class="tick" id="tick" title="Avance del tiempo"></div>
+    </div>
+    <div class="prog-foot">
+      <span id="pct">0% de la meta</span>
+      <span class="muted" id="meta">Meta: $500,000 para recibir $60,000</span>
+    </div>
+    <p class="legend"><i aria-hidden="true"></i><span id="tickTxt">La marca indica cuánto del plazo ya pasó.</span></p>
+  </section>
+
+  <section class="card stats" aria-label="Resumen de cobranza y ritmo">
+    <div class="stat">
+      <p class="label">Por cobrar</p>
+      <p class="v warn" id="porCobrar">$0</p>
+      <p class="s" id="porCobrarS">Sin gastos pendientes</p>
+    </div>
+    <div class="stat">
+      <p class="label">Ya cobrado</p>
+      <p class="v ok" id="cobrado">$0</p>
+      <p class="s" id="cobradoS">Sin gastos pagados</p>
+    </div>
+    <div class="stat">
+      <p class="label">Ritmo necesario</p>
+      <p class="v" id="ritmo">—</p>
+      <p class="s" id="ritmoS">por día hasta el cierre</p>
+    </div>
+  </section>
+
+  <section class="card people" id="peopleCard" hidden aria-labelledby="peopleT">
+    <h2 id="peopleT">Quién te debe</h2>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <form class="card form" id="form" novalidate>
+    <h2 id="formT">Nuevo gasto</h2>
+    <div class="grid">
+      <label class="field"><span>Quién lo hizo</span>
+        <input id="persona" list="personas" autocomplete="off" placeholder="Nombre de la persona" maxlength="80">
+      </label>
+      <label class="field"><span>Qué se compró (opcional)</span>
+        <input id="concepto" autocomplete="off" placeholder="Concepto" maxlength="120">
+      </label>
+      <label class="field"><span>Monto (MXN)</span>
+        <input id="monto" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+      </label>
+      <label class="field"><span>Fecha del gasto</span>
+        <input id="fecha" type="date">
+      </label>
+      <label class="field"><span>Estado</span>
+        <select id="estadoSel">
+          <option value="pend">Pendiente de pago</option>
+          <option value="paid">Pagado</option>
+        </select>
+      </label>
+      <label class="field"><span>Fecha de pago</span>
+        <input id="fechaPago" type="date" disabled>
+      </label>
+      <label class="field wide"><span>Nota (opcional)</span>
+        <input id="nota" autocomplete="off" placeholder="Ej. te presté para liberar crédito" maxlength="200">
+      </label>
+    </div>
+    <datalist id="personas"></datalist>
+    <p class="err" id="err" role="alert" hidden></p>
+    <div class="actions">
+      <button class="btn primary" type="submit" id="guardar">Agregar gasto</button>
+      <button class="btn" type="button" id="cancelar" hidden>Cancelar edición</button>
+    </div>
+  </form>
+
+  <section class="card" aria-labelledby="listT">
+    <div class="list-head">
+      <h2 id="listT">Gastos</h2>
+      <div class="tabs" role="group" aria-label="Filtrar gastos">
+        <button class="tab" type="button" data-f="all" aria-pressed="true" id="tAll">Todos</button>
+        <button class="tab" type="button" data-f="pend" aria-pressed="false" id="tPend">Pendientes</button>
+        <button class="tab" type="button" data-f="paid" aria-pressed="false" id="tPaid">Pagados</button>
+      </div>
+    </div>
+    <ul class="items" id="lista"></ul>
+    <p class="vacio" id="vacio" hidden></p>
+  </section>
+
+  <details class="backup">
+    <summary>Respaldo de datos</summary>
+    <div class="body">
+      <p class="muted">Copia tus gastos como texto y guárdalos donde quieras. Para restaurar, pega el texto aquí y pulsa Restaurar.</p>
+      <textarea id="respaldo" aria-label="Texto del respaldo" spellcheck="false"></textarea>
+      <div class="actions" style="margin-top:0">
+        <button class="btn small" type="button" id="copiar">Copiar respaldo</button>
+        <button class="btn small" type="button" id="restaurar">Restaurar desde el texto</button>
+        <span class="muted" id="respMsg" role="status"></span>
+      </div>
+    </div>
+  </details>
+
+  <p class="estado" id="estado"></p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function () {
+  var CFG = { goal: 500000, bonus: 60000, start: '2026-10-27', end: '2027-01-25' };
+  /* Supabase: Project Settings > API. Si url está vacío, solo se guarda en este navegador.
+     key es la contraseña de los datos: quien tenga este archivo puede verlos y editarlos. */
+  var SUPABASE = {
+    url: 'https://kmsbgdflzbyebrykwsas.supabase.co',
+    anonKey: 'sb_publishable_tBW8Wn80-oDt2TrKSjrHIw_uUMxcova',
+    key: 'PDy_PfAF84IafSau_AxEKHFQs3gRc80WGeTxntYyIvc'
+  };
+  var LS = 'amex-bono-gastos-v1';
+  var state = { expenses: [] };
+  var ref = null, editingId = null, confirmId = null, filter = 'all';
+  var writing = false, dirty = false;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function money(n) {
+    return Number(n).toLocaleString('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function todayISO() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function parseISO(s) { var p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+  function daysBetween(a, b) { return Math.round((parseISO(b) - parseISO(a)) / 86400000); }
+  function dateLabel(s, long) {
+    if (!s) return '—';
+    return parseISO(s).toLocaleDateString('es-MX', { day: 'numeric', month: long ? 'long' : 'short', year: 'numeric' });
+  }
+  function uid() {
+    try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+    return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+  var ISO = /^\d{4}-\d{2}-\d{2}$/;
+  function clean(e) {
+    e = e || {};
+    return {
+      id: String(e.id || uid()),
+      persona: String(e.persona || '').slice(0, 80),
+      concepto: String(e.concepto || '').slice(0, 120),
+      monto: Number(e.monto) || 0,
+      fecha: ISO.test(e.fecha || '') ? e.fecha : todayISO(),
+      pagado: !!e.pagado,
+      fechaPago: ISO.test(e.fechaPago || '') ? e.fechaPago : '',
+      nota: String(e.nota || '').slice(0, 200),
+      creado: Number(e.creado) || Date.now()
+    };
+  }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function sum(list) { return list.reduce(function (t, e) { return t + e.monto; }, 0); }
+
+  function loadLocal() {
+    try {
+      var raw = localStorage.getItem(LS);
+      if (raw) {
+        var o = JSON.parse(raw);
+        if (o && Array.isArray(o.expenses)) state.expenses = o.expenses.map(clean);
+      }
+    } catch (e) {}
+  }
+  function saveLocal() { try { localStorage.setItem(LS, JSON.stringify({ expenses: state.expenses })); } catch (e) {} }
+
+  function setStatus(s) {
+    var m = {
+      local: 'Se guarda solo en este navegador. Copia un respaldo de vez en cuando.',
+      'db-ok': 'Guardado en la nube. Disponible en cualquier navegador.',
+      'db-fail': 'No se pudo conectar con la nube. Los cambios quedan en este navegador.'
+    };
+    $('estado').textContent = m[s] || '';
+  }
+
+  async function persist() {
+    saveLocal();
+    if (!ref) return;
+    if (writing) { dirty = true; return; }
+    writing = true;
+    try {
+      do {
+        dirty = false;
+        await ref.set({ expenses: state.expenses, updatedAt: new Date().toISOString() });
+      } while (dirty);
+      setStatus('db-ok');
+    } catch (e) {
+      setStatus('db-fail');
+    }
+    writing = false;
+  }
+
+  function renderSummary() {
+    var ex = state.expenses;
+    var total = sum(ex);
+    var pendList = ex.filter(function (e) { return !e.pagado; });
+    var pend = sum(pendList);
+    var paid = total - pend;
+    var falta = Math.max(CFG.goal - total, 0);
+    var pct = Math.min(total / CFG.goal * 100, 100);
+    var today = todayISO();
+    var left = daysBetween(today, CFG.end);
+    var span = Math.max(daysBetween(CFG.start, CFG.end), 1);
+    var elapsed = Math.min(Math.max(daysBetween(CFG.start, today), 0), span) / span * 100;
+
+    $('periodo').textContent = 'Activada el ' + dateLabel(CFG.start, true) + ' · cierra el ' + dateLabel(CFG.end, true);
+    $('diasN').textContent = left > 0 ? String(left) : '0';
+    $('diasL').textContent = left > 1 ? 'días restantes' : left === 1 ? 'día restante' : left === 0 ? 'último día, vence hoy' : 'plazo terminado';
+
+    $('gastado').textContent = money(total);
+    $('faltan').textContent = money(falta);
+    $('fill').style.width = pct + '%';
+    $('tick').style.left = 'calc(' + elapsed + '% - 1px)';
+    $('bar').setAttribute('aria-valuenow', String(Math.round(Math.min(total, CFG.goal))));
+    $('pct').textContent = (Math.round(pct * 10) / 10).toLocaleString('es-MX') + '% de la meta';
+    $('meta').textContent = falta === 0 ? 'Meta alcanzada' : 'Meta: ' + money(CFG.goal) + ' para recibir ' + money(CFG.bonus);
+    var elapsedR = Math.round(elapsed);
+    $('tickTxt').textContent = 'La marca indica el avance del plazo: ' + elapsedR + '% transcurrido.';
+
+    $('porCobrar').textContent = money(pend);
+    $('porCobrarS').textContent = pendList.length ? pendList.length + (pendList.length === 1 ? ' gasto pendiente' : ' gastos pendientes') : 'Sin gastos pendientes';
+    var paidN = ex.length - pendList.length;
+    $('cobrado').textContent = money(paid);
+    $('cobradoS').textContent = paidN ? paidN + (paidN === 1 ? ' gasto pagado' : ' gastos pagados') : 'Sin gastos pagados';
+
+    if (falta === 0) { $('ritmo').textContent = '—'; $('ritmoS').textContent = 'Meta alcanzada'; }
+    else if (left < 0) { $('ritmo').textContent = '—'; $('ritmoS').textContent = 'El plazo ya terminó'; }
+    else { $('ritmo').textContent = money(Math.ceil(falta / Math.max(left, 1))); $('ritmoS').textContent = 'por día hasta el cierre'; }
+  }
+
+  function renderPeople() {
+    var map = {};
+    state.expenses.forEach(function (e) {
+      if (e.pagado) return;
+      var k = e.persona.trim().toLowerCase();
+      if (!map[k]) map[k] = { name: e.persona.trim() || 'Sin nombre', total: 0, n: 0 };
+      map[k].total += e.monto; map[k].n += 1;
+    });
+    var rows = Object.keys(map).map(function (k) { return map[k]; }).sort(function (a, b) { return b.total - a.total; });
+    $('peopleCard').hidden = rows.length === 0;
+    var box = $('chips'); box.textContent = '';
+    rows.forEach(function (r) {
+      var c = el('div', 'chip');
+      c.appendChild(el('b', null, r.name));
+      c.appendChild(el('span', null, money(r.total)));
+      c.appendChild(el('small', null, r.n + (r.n === 1 ? ' gasto' : ' gastos')));
+      box.appendChild(c);
+    });
+    var dl = $('personas'); dl.textContent = '';
+    var seen = {};
+    state.expenses.forEach(function (e) {
+      var k = e.persona.trim().toLowerCase();
+      if (!k || seen[k]) return; seen[k] = 1;
+      var o = document.createElement('option'); o.value = e.persona.trim(); dl.appendChild(o);
+    });
+  }
+
+  function buildItem(e) {
+    var li = el('li', 'item');
+    li.dataset.id = e.id;
+    var main = el('div', 'item-main');
+    main.appendChild(el('p', 'concepto', e.concepto || 'Gasto sin concepto'));
+    var parts = [e.persona || 'Sin nombre', dateLabel(e.fecha)];
+    if (e.pagado) parts.push('Pagó el ' + dateLabel(e.fechaPago));
+    main.appendChild(el('p', 'meta', parts.join(' · ')));
+    if (e.nota) main.appendChild(el('p', 'nota', e.nota));
+    li.appendChild(main);
+
+    var side = el('div', 'item-side');
+    side.appendChild(el('p', 'monto', money(e.monto)));
+    side.appendChild(el('span', 'pill ' + (e.pagado ? 'paid' : 'pend'), e.pagado ? 'Pagado' : 'Pendiente'));
+    li.appendChild(side);
+
+    var act = el('div', 'item-actions');
+    function btn(label, a, cls) {
+      var b = el('button', 'btn small' + (cls ? ' ' + cls : ''), label);
+      b.type = 'button'; b.dataset.act = a; return b;
+    }
+    if (confirmId === e.id) {
+      act.appendChild(el('span', 'confirm', '¿Eliminar este gasto?'));
+      act.appendChild(btn('Sí, eliminar', 'delete-yes', 'danger'));
+      act.appendChild(btn('Cancelar', 'delete-no'));
+    } else {
+      act.appendChild(btn(e.pagado ? 'Marcar pendiente' : 'Marcar pagado', 'toggle'));
+      act.appendChild(btn('Editar', 'edit'));
+      act.appendChild(btn('Eliminar', 'delete'));
+    }
+    li.appendChild(act);
+    return li;
+  }
+
+  function renderList() {
+    var ex = state.expenses;
+    var nP = ex.filter(function (e) { return !e.pagado; }).length;
+    $('tAll').textContent = 'Todos (' + ex.length + ')';
+    $('tPend').textContent = 'Pendientes (' + nP + ')';
+    $('tPaid').textContent = 'Pagados (' + (ex.length - nP) + ')';
+    ['tAll', 'tPend', 'tPaid'].forEach(function (id) {
+      var b = $(id); b.setAttribute('aria-pressed', b.dataset.f === filter ? 'true' : 'false');
+    });
+    var items = ex.slice().sort(function (a, b) {
+      return (b.fecha || '').localeCompare(a.fecha || '') || (b.creado || 0) - (a.creado || 0);
+    }).filter(function (e) { return filter === 'all' || (filter === 'pend' ? !e.pagado : e.pagado); });
+    var ul = $('lista'); ul.textContent = '';
+    items.forEach(function (e) { ul.appendChild(buildItem(e)); });
+    var v = $('vacio');
+    v.hidden = items.length > 0;
+    v.textContent = ex.length === 0
+      ? 'Aún no hay gastos. Agrega el primero arriba: quién lo hizo, cuánto fue y si ya te pagó.'
+      : 'No hay gastos en este filtro.';
+  }
+
+  function renderAll() { renderSummary(); renderPeople(); renderList(); }
+
+  /* Formulario */
+  function showErr(msg) { var e = $('err'); e.textContent = msg || ''; e.hidden = !msg; }
+  function resetForm() {
+    editingId = null;
+    $('persona').value = ''; $('concepto').value = ''; $('monto').value = ''; $('nota').value = '';
+    $('fecha').value = todayISO(); $('estadoSel').value = 'pend';
+    $('fechaPago').value = ''; $('fechaPago').disabled = true;
+    $('formT').textContent = 'Nuevo gasto';
+    $('guardar').textContent = 'Agregar gasto';
+    $('cancelar').hidden = true;
+    showErr('');
+  }
+  $('estadoSel').addEventListener('change', function () {
+    var paid = this.value === 'paid';
+    $('fechaPago').disabled = !paid;
+    if (paid && !$('fechaPago').value) $('fechaPago').value = todayISO();
+    if (!paid) $('fechaPago').value = '';
+  });
+  $('cancelar').addEventListener('click', resetForm);
+
+  $('form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var persona = $('persona').value.trim();
+    var monto = parseFloat($('monto').value);
+    if (!persona) { showErr('Escribe quién hizo el gasto.'); $('persona').focus(); return; }
+    if (!(monto > 0)) { showErr('Escribe un monto mayor a 0.'); $('monto').focus(); return; }
+    var paid = $('estadoSel').value === 'paid';
+    var rec = clean({
+      id: editingId || uid(),
+      persona: persona,
+      concepto: $('concepto').value.trim(),
+      monto: Math.round(monto * 100) / 100,
+      fecha: $('fecha').value || todayISO(),
+      pagado: paid,
+      fechaPago: paid ? ($('fechaPago').value || todayISO()) : '',
+      nota: $('nota').value.trim(),
+      creado: editingId ? (state.expenses.filter(function (e) { return e.id === editingId; })[0] || {}).creado : Date.now()
+    });
+    if (editingId) {
+      state.expenses = state.expenses.map(function (e) { return e.id === editingId ? rec : e; });
+    } else {
+      state.expenses = state.expenses.concat([rec]);
+    }
+    resetForm();
+    renderAll();
+    persist();
+    $('persona').focus();
+  });
+
+  /* Lista */
+  $('lista').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button[data-act]');
+    if (!b) return;
+    var li = b.closest('.item'); if (!li) return;
+    var id = li.dataset.id, act = b.dataset.act;
+    var e = state.expenses.filter(function (x) { return x.id === id; })[0];
+    if (!e) return;
+    if (act === 'toggle') {
+      state.expenses = state.expenses.map(function (x) {
+        if (x.id !== id) return x;
+        var np = !x.pagado;
+        return clean(Object.assign({}, x, { pagado: np, fechaPago: np ? todayISO() : '' }));
+      });
+      renderAll(); persist();
+    } else if (act === 'edit') {
+      editingId = id;
+      $('persona').value = e.persona; $('concepto').value = e.concepto; $('monto').value = e.monto;
+      $('fecha').value = e.fecha; $('estadoSel').value = e.pagado ? 'paid' : 'pend';
+      $('fechaPago').disabled = !e.pagado; $('fechaPago').value = e.fechaPago || '';
+      $('nota').value = e.nota;
+      $('formT').textContent = 'Editar gasto';
+      $('guardar').textContent = 'Guardar cambios';
+      $('cancelar').hidden = false;
+      showErr('');
+      var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      $('form').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+      $('persona').focus();
+    } else if (act === 'delete') {
+      confirmId = id; renderList();
+    } else if (act === 'delete-no') {
+      confirmId = null; renderList();
+    } else if (act === 'delete-yes') {
+      confirmId = null;
+      state.expenses = state.expenses.filter(function (x) { return x.id !== id; });
+      if (editingId === id) resetForm();
+      renderAll(); persist();
+    }
+  });
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('click', function () { filter = t.dataset.f; confirmId = null; renderList(); });
+  });
+
+  /* Respaldo */
+  function backupText() { return JSON.stringify({ expenses: state.expenses }, null, 1); }
+  $('copiar').addEventListener('click', function () {
+    var ta = $('respaldo'); ta.value = backupText();
+    var msg = $('respMsg');
+    function fallback() { ta.focus(); ta.select(); msg.textContent = 'Selecciona el texto y cópialo.'; }
+    try {
+      navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = 'Copiado.'; }, fallback);
+    } catch (e) { fallback(); }
+  });
+  $('restaurar').addEventListener('click', function () {
+    var msg = $('respMsg');
+    try {
+      var o = JSON.parse($('respaldo').value);
+      if (!o || !Array.isArray(o.expenses)) throw new Error('formato');
+      state.expenses = o.expenses.map(clean);
+      confirmId = null; resetForm(); renderAll(); persist();
+      msg.textContent = 'Restaurado: ' + state.expenses.length + ' gastos.';
+    } catch (e) {
+      msg.textContent = 'El texto no es un respaldo válido.';
+    }
+  });
+
+  /* Arranque */
+  loadLocal();
+  resetForm();
+  renderAll();
+  setStatus('local');
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) renderSummary(); });
+
+  if (SUPABASE.url && window.supabase) {
+    var sb = window.supabase.createClient(SUPABASE.url, SUPABASE.anonKey, { auth: { persistSession: false } });
+    var known = null;
+
+    ref = {
+      set: async function (doc) {
+        known = doc.updatedAt;
+        var r = await sb.rpc('save_tracker', { p_key: SUPABASE.key, p_data: doc });
+        if (r.error) throw r.error;
+      }
+    };
+
+    async function pull() {
+      if (writing) return;
+      var r = await sb.rpc('get_tracker', { p_key: SUPABASE.key });
+      if (r.error) { setStatus('db-fail'); return; }
+      var d = r.data;
+      if (!d || !Array.isArray(d.expenses)) {
+        if (state.expenses.length) persist(); else setStatus('db-ok');
+        return;
+      }
+      setStatus('db-ok');
+      if (writing || dirty || d.updatedAt === known) return;
+      known = d.updatedAt;
+      state.expenses = d.expenses.map(clean);
+      confirmId = null;
+      saveLocal();
+      renderAll();
+    }
+
+    pull();
+    setInterval(function () { if (!document.hidden) pull(); }, 15000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) pull(); });
+  }
+})();
+</script>
+
+</body>
+</html>
